@@ -1,0 +1,71 @@
+---
+description: NestJS conventions — official docs and best practices for this project
+alwaysApply: true
+---
+
+# NestJS
+
+## Source of truth
+
+For this project, use the [official NestJS documentation](https://docs.nestjs.com/) for all NestJS-related topics (modules, controllers, providers, pipes, guards, interceptors, config, testing, etc.). Prefer official docs over blog posts, Stack Overflow snippets, or outdated patterns. When unsure, look up the matching guide before inventing APIs.
+
+Apply NestJS best practices throughout: modular architecture, dependency injection, DTO validation, proper exception handling, and patterns documented at https://docs.nestjs.com/.
+
+## Reference code
+
+`~/dev/code/boilerplates` is allowed for browsing and borrowing ideas. Before copying or adapting anything:
+
+1. Read and understand the relevant code in context.
+2. Check that it fits this project's structure, dependencies, and conventions.
+3. Prefer official docs when they conflict with boilerplate patterns.
+
+Do not copy boilerplate code blindly.
+
+## Architecture
+
+- **Feature modules:** Group by domain (`UsersModule`, `WalletsModule`). Keep `AppModule` as composition root (imports only).
+- **Thin controllers, fat services:** HTTP/route handling in controllers; business logic in injectable services.
+- **DI:** Register providers in `providers`; export shared services from `exports` when other modules need them. Prefer constructor injection; avoid `new` for framework-managed classes.
+
+## HTTP & validation
+
+- **DTOs + `ValidationPipe`:** Use classes with `class-validator` decorators; enable a global pipe in `main.ts` (`whitelist`, `forbidNonWhitelisted`, `transform`).
+- **Serialization:** Use `class-transformer` (`@Exclude()`, `@Expose()`) for response shaping when needed.
+- **Status codes:** Use `@HttpCode()`, `@Header()`, and Nest exceptions (`NotFoundException`, `BadRequestException`, etc.) — see [exception filters](https://docs.nestjs.com/exception-filters).
+
+## Configuration & cross-cutting
+
+- **`@nestjs/config`:** Use `ConfigModule.forRoot({ isGlobal: true })` and typed `ConfigService` — not raw `process.env` scattered in services.
+- **Guards / interceptors / filters:** Auth in guards; logging/transform in interceptors; consistent errors in exception filters — register globally or per-controller as docs recommend.
+
+## Testing
+
+- Use `@nestjs/testing` `Test.createTestingModule()` with mocked providers. Co-locate `*.spec.ts` with units; e2e in `test/` per [testing guide](https://docs.nestjs.com/fundamentals/testing).
+
+## Examples
+
+```typescript
+// ❌ Business logic in controller
+@Get(':id')
+find(@Param('id') id: string) {
+  return this.db.query(`SELECT * FROM users WHERE id = ${id}`);
+}
+
+// ✅ Delegate to service; validate input via DTO + ValidationPipe
+@Get(':id')
+findOne(@Param() params: FindUserParamsDto) {
+  return this.usersService.findOne(params.id);
+}
+```
+
+```typescript
+// ❌ Manual instantiation
+const service = new UsersService();
+
+// ✅ Nest-managed provider
+constructor(private readonly usersService: UsersService) {}
+```
+
+## CLI
+
+Prefer `nest generate` (module, controller, service, resource) for consistent structure and spec files.
