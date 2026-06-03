@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: wallets_app_db
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: wallets_app_user
+      POSTGRES_PASSWORD: wallets_app_password
+      POSTGRES_DB: wallets_app_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U wallets_app_user -d wallets_app_db',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app-dev:
+    profiles: [dev]
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: wallets_app_api_dev
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://wallets_app_user:wallets_app_password@postgres:5432/wallets_app_db
+    volumes:
+      - .:/app
+      - app_dev_node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app-prod:
+    profiles: [prod]
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: wallets_app_api_prod
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://wallets_app_user:wallets_app_password@postgres:5432/wallets_app_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  app_dev_node_modules:

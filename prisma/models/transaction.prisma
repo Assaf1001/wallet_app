@@ -1,0 +1,27 @@
+model Transaction {
+  id                    String            @id @default(dbgenerated("prefix_uuid('transaction_'::text)"))
+  walletId              String            @map("wallet_id")
+  merchantId            String            @map("merchant_id")
+  transactionType       TransactionType   @map("transaction_type")
+  amount                Decimal           @db.Decimal(18, 2)
+  currency              Currency
+  status                TransactionStatus @default(PENDING)
+  declineMessage        String?           @map("decline_message")
+  originalTransactionId String?           @map("original_transaction_id")
+  idempotencyKey        String            @map("idempotency_key")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+  deletedAt             DateTime?         @map("deleted_at")
+
+  wallet              Wallet        @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  merchant            Merchant      @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  originalTransaction Transaction?  @relation("RefundLink", fields: [originalTransactionId], references: [id], onDelete: Restrict)
+  refunds             Transaction[] @relation("RefundLink")
+  ledgerEntries       LedgerEntry[]
+
+  @@unique([walletId, idempotencyKey])
+  @@index([walletId, createdAt])
+  @@index([merchantId])
+  @@index([status])
+  @@map("transactions")
+}

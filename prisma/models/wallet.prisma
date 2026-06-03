@@ -1,0 +1,18 @@
+model Wallet {
+  id        String       @id @default(dbgenerated("prefix_uuid('wallet_'::text)"))
+  identity  String
+  currency  Currency
+  balance   Decimal      @default(0) @db.Decimal(18, 2)
+  status    WalletStatus @default(ACTIVE)
+  version   Int          @default(0)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  deletedAt DateTime?    @map("deleted_at")
+
+  transactions  Transaction[]
+  ledgerEntries LedgerEntry[]
+
+  @@unique([identity, currency])
+  @@index([status])
+  @@map("wallets")
+}

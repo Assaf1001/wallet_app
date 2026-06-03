@@ -1,0 +1,18 @@
+// Append-only ledger: no updates/deletes in production (enforced by DB trigger).
+// Per transaction, signed amounts must net to zero per currency (double-entry).
+model LedgerEntry {
+  id            String          @id @default(dbgenerated("prefix_uuid('ledger_entry_'::text)"))
+  walletId      String          @map("wallet_id")
+  transactionId String          @map("transaction_id")
+  type          LedgerEntryType
+  amount        Decimal         @db.Decimal(18, 2)
+  currency      Currency
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  wallet      Wallet      @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+
+  @@index([walletId, createdAt])
+  @@index([transactionId])
+  @@map("ledger_entries")
+}

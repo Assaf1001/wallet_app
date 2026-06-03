@@ -1,0 +1,32 @@
+enum Currency {
+  USD
+  EUR
+  ILS
+}
+
+enum WalletStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum MerchantStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TransactionType {
+  CHARGE
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FAILED
+}
+
+enum LedgerEntryType {
+  DEBIT
+  CREDIT
+}
